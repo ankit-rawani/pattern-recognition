@@ -1,0 +1,117 @@
+function [b, v, to, s] = CT1(xtrain, ytrain, xtest, ytest, t, lambdaArr)
+b = [];
+v = [];
+s = [];
+
+for i=1:length(lambdaArr)
+    [bt, vt, st] = BVAnalysis(xtrain, ytrain, xtest, ytest, t, lambdaArr(i));
+    b = [b bt];
+    v = [v vt];
+    s = [s st];
+end
+
+to = b + v;
+
+end
+
+function [bias2, var, sse] = BVAnalysis(xtrain, ytrain, xtest, ytest, t, lambda)
+phi1 = [];
+phi2 = [];
+phi = [];
+
+n = length(xtrain);
+
+xtrain1 = xtrain(1:2:n);
+xtrain2 = xtrain(2:2:n);
+
+n1 = length(xtrain1);
+n2 = length(xtrain2);
+
+t1 = t(1:2:n);
+t2 = t(2:2:n);
+
+for i=1:n1
+    phi1 = [phi1; Basis(xtrain1(i))];
+end
+
+w1 = ((phi1'*phi1 +lambda*eye(3))^-1)*phi1'*t1';
+
+for i=1:n2
+    phi2 = [phi2; Basis(xtrain2(i))];
+end
+
+w2 = ((phi2'*phi2 +lambda*eye(3))^-1)*phi2'*t2';
+
+for i=1:n
+    phi = [phi; Basis(xtrain(i))];
+end
+
+w = ((phi'*phi +lambda*eye(3))^-1)*phi'*t';
+
+yhat1 = [];
+yhat2 = [];
+
+for i=1:n
+    yhat1 = [yhat1 w1'*Basis(xtrain(i))'];
+end
+
+for i=1:n
+    yhat2 = [yhat2 w2'*Basis(xtrain(i))'];
+end
+
+ybar = 0.5 * (yhat1 + yhat2);
+
+bias2 = 0;
+for i=1:n
+    bias2 = bias2 + (ybar(i) - ytrain(i)) ^ 2;
+end
+
+bias2 = bias2 / n;
+
+var = 0;
+for i=1:n
+    tmp = (yhat1(i) - ybar(i))^2 + (yhat1(i) - ybar(i))^2;
+    var = var + tmp / 2;
+end
+
+var = var / n;
+
+yhattest1 = [];
+yhattest2 = [];
+yhattest = [];
+
+for i=1:n
+    yhattest1 = [yhattest1 w1'*Basis(xtest(i))'];
+end
+
+for i=1:n
+    yhattest2 = [yhattest2 w2'*Basis(xtest(i))'];
+end
+
+for i=1:n
+    yhattest = [yhattest w'*Basis(xtest(i))'];
+end
+
+ybartest = 0.5 * (yhattest1 + yhattest2);
+
+e = ybartest - ytest;
+e2 = yhattest - ytest;
+
+sse = [e * e'; e2 * e2'];
+
+disp("lambda")
+disp(lambda)
+
+disp("w1")
+disp(w1)
+
+disp("w2")
+disp(w2)
+
+disp("--------------------")
+
+end
+
+function [res] = Basis(x)
+res = [1 x x^2];
+end
